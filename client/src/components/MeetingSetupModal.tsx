@@ -4,6 +4,7 @@ import { X, Video, VideoOff, Mic, MicOff, Volume2 } from 'lucide-react';
 import { useDeviceCheck } from '@/hooks/MettingSetupHooks/useDeviceCheck';
 import { useMediaToggle } from '@/hooks/MettingSetupHooks/useMediaToggle';
 import { useMediaStream } from '@/hooks/MettingSetupHooks/useMediaStream';
+import { useSocket } from '@/context/SocketProvider';
 
 interface MeetingSetupModalProps {
   isOpen: boolean;
@@ -16,10 +17,19 @@ const MeetingSetupModal: React.FC<MeetingSetupModalProps> = ({ isOpen, onClose }
   const { setupMediaStream, audioLevel } = useMediaStream(videoRef as React.RefObject<HTMLVideoElement>);
   const { isCameraOn, isMicrophoneOn, toggleCamera, toggleMicrophone } = useMediaToggle(videoRef as React.RefObject<HTMLVideoElement>);
   const navigate = useNavigate();
+  const socketManager = useSocket();
+
+  
   const handleJoinMeeting = () => {
-    const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
-    navigate(`/stream/${roomId}`);
-    onClose();
+    try{
+      const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+      socketManager.joinRoom(roomId);
+      navigate(`/stream/${roomId}`);
+      onClose();
+    }catch(error){
+      console.error("Error joining meeting", error);
+      onClose();
+    }
   };
 
   useEffect(() => {

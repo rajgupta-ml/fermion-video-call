@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Video, Users, Plus, Link as LinkIcon, ArrowRight } from 'lucide-react';
 import MeetingSetupModal from './MeetingSetupModal';
+import { useSocket } from '@/context/SocketProvider';
 
 const Hero: React.FC = () => {
   const [meetingCode, setMeetingCode] = useState('');
@@ -9,8 +10,13 @@ const Hero: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Joining meeting with code:', meetingCode);
-    // Implement actual meeting join logic here
+    if(meetingCode) {
+      handleNewMeeting();
+    }else {
+      // TODO: Handle error
+      //Toastify
+      console.error("Meeting code is required")
+    }
   };
 
   const handleNewMeeting = () => {

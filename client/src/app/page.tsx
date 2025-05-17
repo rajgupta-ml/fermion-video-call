@@ -2,10 +2,13 @@
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import StreamRoom from '@/components/StreamRoom';
+import { SocketProvider } from '@/context/SocketProvider';
+import { SocketManager } from '@/mangers/SocketManager';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router';
 
+// Add Toast Container For Error Handling
 
 const HomePage = () => {
   return (
@@ -17,10 +20,11 @@ const HomePage = () => {
     </div>
   )
 }
+
+
 export default function Home() {
 
   const [mounted, setMounted] = useState(false);
-
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -28,13 +32,15 @@ export default function Home() {
   if (!mounted) return null;
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element = {<HomePage />}/>
-        <Route path="/stream/:roomId" element = {<StreamRoom />}/>
-      </Routes>
-      
-    </BrowserRouter>
+    <SocketProvider>  
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element = {<HomePage />}/>
+          <Route path="/stream/:roomId" element = {<StreamRoom />}/>
+        </Routes>
+        
+      </BrowserRouter>
+    </SocketProvider>
     
   );
 }
