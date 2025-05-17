@@ -6,6 +6,7 @@ import { Server } from "socket.io";
 import { createServer } from "http";
 import { SocketManager } from "./manager/SocketManager";
 import { logger } from "./utils/logger";
+import { MediaSoupManager } from "./manager/MediaSoupManager";
 const PORT = config.port;
 
 
@@ -24,7 +25,8 @@ app.get("/health", (request: Request, response: Response) => {
 
 httpServer.listen(PORT, () => {
   try {
-    new SocketManager(io);
+    const mediaSoupManager = new MediaSoupManager();
+    new SocketManager(io, mediaSoupManager);
     console.log(`Server is running on port ${PORT}`);
   } catch (error) {
     // TODO: Add retry logic here

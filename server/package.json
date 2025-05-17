@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "dev": "bun run --watch /src/index.ts",
-    "dev:debug": "bun run --watch /src/index.ts | jq"
+    "dev:debug": "bun run --watch /src/index.ts | jq",
+    "install": "bun install --exclude=mediasoup",
+    "install:mediasoup": "cd node_modules/mediasoup && npm install && npm run worker:build"
   },
   "devDependencies": {
     "@types/bun": "latest",
@@ -19,6 +21,7 @@
   "dependencies": {
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "mediasoup": "3",
     "socket.io": "^4.8.1"
   }
 }

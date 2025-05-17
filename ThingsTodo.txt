@@ -1,0 +1,2 @@
+// Create A media soup Client and service when they join 
+// In server, Create a Error Handler for socketManager which can emit error and we can show it in the UI 

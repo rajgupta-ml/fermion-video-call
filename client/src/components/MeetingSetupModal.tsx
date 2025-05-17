@@ -19,7 +19,7 @@ const MeetingSetupModal: React.FC<MeetingSetupModalProps> = ({ isOpen, onClose }
   const navigate = useNavigate();
   const socketManager = useSocket();
 
-  
+
   const handleJoinMeeting = () => {
     try{
       const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
