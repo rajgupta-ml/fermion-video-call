@@ -13,9 +13,15 @@ export const useMediaStream = (videoRef: React.RefObject<HTMLVideoElement>, sock
         videoRef.current.srcObject = stream;
       }
 
+      // Set the media stream in the socket manager immediately
       socketManager.setMediaStream(stream);
+      console.log("📹 Media stream set up successfully:", {
+        videoTracks: stream.getVideoTracks().length,
+        audioTracks: stream.getAudioTracks().length
+      });
+
     } catch (error) {
-      console.error('Error accessing media devices:', error);
+      console.error('❌ Error accessing media devices:', error);
     }
   };
 

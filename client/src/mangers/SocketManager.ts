@@ -18,6 +18,8 @@ export class SocketManager {
     private socket: Socket | null = null;
     private socketUrl: string = config.socketUrl;
     private mediaStream: MediaStream | null = null;
+    private isProducing: boolean = false;
+
     constructor(private mediaSoupManager: MediaSoupManager) {
         this.initSocket();
     }
@@ -49,32 +51,8 @@ export class SocketManager {
                 console.log("Send Transport :", {roomId, transportParams});
     
                 this.mediaSoupManager.setupDTLSConnection(transportParams, this.socket as Socket, roomId);
-
-                const interval = setInterval(async () => {
-                    console.log(this.mediaStream);
-                    // if (!this.mediaStream) {
-                    //     console.warn("Waiting for media stream...");
-                    //     return;
-                    // }
+                await this.startMediaProduction();
                 
-                    // try {
-                    //     const mediaProducer = await this.mediaSoupManager.produceMedia(this.mediaStream);
-                    //     console.log("Media producer initialized:", mediaProducer);
-                
-                    //     clearInterval(interval); // Stop polling once successful
-                    // } catch (err) {
-                    //     console.error("Failed to produce media:", err);
-                    // }
-                }, 1000);
-                
-                  
-                console.log("The control Reaches here");
-
-                
-                // console.log("Media Stream is available")
-                // this.socket?.emit("produce", {roomId, mediaProducer}, (id: string) => {
-                //     console.log("produce", roomId, mediaProducer);
-                // });
             });
 
         }catch(error) {
@@ -100,12 +78,69 @@ export class SocketManager {
 
 
     public setMediaStream(mediaStream: MediaStream) {
-        console.log("setMediaStrem is called")
+        console.log("📹 Media stream set in SocketManager:", {
+            videoTracks: mediaStream.getVideoTracks().length,
+            audioTracks: mediaStream.getAudioTracks().length,
+            id: mediaStream.id
+        });
         this.mediaStream = mediaStream;
     }
 
     public getMediaStream() {
         return this.mediaStream;
+    }
+
+
+    private async startMediaProduction() {
+        if(this.isProducing){
+            console.log("⚠️ Already producing media");
+            return;
+        }
+
+
+        const maxWaitTime = 10000;
+        const checkInterval = 500;
+        let waitTime = 0;
+
+
+        const waitForMediaStream = () => {
+            return new Promise<void> ((resolve,reject) => {
+                const checkMedia = () => {
+                    if(this.mediaStream) {
+                        console.log("📹 Media stream is available, starting production");
+                        resolve();
+                        return 
+                    }
+
+
+                    waitTime += checkInterval;
+                    if(waitTime >= maxWaitTime) {
+                        reject(new Error("Timeout waiting for media stream"));
+                        return;
+                    }
+
+
+                    setTimeout(checkMedia, checkInterval);
+                }
+
+                checkMedia();
+
+            })
+        }
+
+
+
+        try{
+            await waitForMediaStream();
+            this.mediaSoupManager.setMediaStream(this.mediaStream as MediaStream)
+            this.isProducing = true;
+            const producers = await this.mediaSoupManager.produceMedia();
+            console.log("🎬 Media production started:", producers.length, "producers");
+        }catch(error){
+            console.error("❌ Failed to start media production:", error);
+            this.isProducing = false;
+        }
+
     }
     
 }

@@ -8,7 +8,7 @@ import type { Socket } from "socket.io-client";
 export class MediaSoupManager extends EventEmitter {
     private device : Device;
     private sendTransport! : Transport;
-
+    private mediaStream: MediaStream | null = null;
     constructor() {
         super();
         this.device = new Device();
@@ -18,6 +18,15 @@ export class MediaSoupManager extends EventEmitter {
             routerRtpCapabilities : rtpCapabilities,
         });
     }
+
+    setMediaStream(mediaStream : MediaStream) {
+        this.mediaStream = mediaStream;
+        console.log("📹 Media stream set in MediaSoupManager:", {
+            videoTracks: mediaStream.getVideoTracks().length,
+            audioTracks: mediaStream.getAudioTracks().length
+        });
+    }
+
     setupDTLSConnection(transportParams: TransportParams, socket : Socket, roomId : string) {
 
     
@@ -26,7 +35,8 @@ export class MediaSoupManager extends EventEmitter {
         if(!this.sendTransport) {
             throw new Error("Failed to create send transport");
         }
-        console.log("I reach Here")
+        console.log("Send Transport Created")
+
         this.sendTransport.on("connect", ({ dtlsParameters }, callback) => {
             const transportId = this.sendTransport.id;
         
@@ -56,7 +66,7 @@ export class MediaSoupManager extends EventEmitter {
             socket.once("produced", ({ id, error }) => {
                 if (error) {
                     console.error("❌ Produce error:", error);
-                    // callback(new Error(error as string));
+                    callback({id});
                 } else {
                     console.log("✅ Media produced with ID:", id);
                     callback({ id });
@@ -81,18 +91,22 @@ export class MediaSoupManager extends EventEmitter {
     }
 
 
-    async produceMedia() {
-        const mediaStream = new MediaStream();
+    async produceMedia() : Promise<Producer[]>{
         if (!this.sendTransport) {
             throw new Error("Send transport not initialized. Call setupDTLSConnection first.");
         }
+
+        if(!this.mediaStream) {
+            throw new Error("No media stream available. Call setMediaStream first.");
+        }
         
         console.log("🎥 Starting media production...");
-        
-        const videoTrack = mediaStream.getVideoTracks()[0];
-        // if (!videoTrack) {
-        //     throw new Error("No video track found in media stream");
-        // }
+
+        const producers = [];
+        const videoTrack = this.mediaStream.getVideoTracks()[0];
+        if (!videoTrack) {
+            throw new Error("No video track found in media stream");
+        }
         
         try {
             // This will trigger the 'connect' event if not already connected
@@ -107,12 +121,32 @@ export class MediaSoupManager extends EventEmitter {
             });
             
             console.log("✅ Media producer created:", mediaProducer.id);
-            return mediaProducer;
+            producers.push(mediaProducer);
         } catch (error) {
             console.error("❌ Failed to produce media:", error);
             throw error;
         }
 
+
+        const audioTrack = this.mediaStream.getAudioTracks()[0];
+        if (!videoTrack) {
+            throw new Error("No video track found in media stream");
+        }
+
+
+        try{
+            const audioProducer = await this.sendTransport.produce({
+                track : audioTrack
+            })
+
+            
+            console.log("✅ Audio producer created:", audioProducer.id);
+            producers.push(audioProducer);
+        }catch(error){
+            console.error("❌ Failed to produce audio:", error);
+        }
+
+        return producers;
         // Save the recording locally
     }
 
