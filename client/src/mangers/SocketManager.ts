@@ -3,6 +3,8 @@ import { RtpCapabilities } from "mediasoup-client/types";
 import { io, Socket } from "socket.io-client";
 import { MediaSoupManager } from "./MediaSoupManager";
 import { setupDTLSConnectionResponse, TransportParams } from "@/types/mediaSoupTypes";
+import { json } from "stream/consumers";
+
 
 
 //Singleton class to manage socket connection
@@ -15,7 +17,7 @@ import { setupDTLSConnectionResponse, TransportParams } from "@/types/mediaSoupT
 export class SocketManager {
     private socket: Socket | null = null;
     private socketUrl: string = config.socketUrl;
-
+    private mediaStream: MediaStream | null = null;
     constructor(private mediaSoupManager: MediaSoupManager) {
         this.initSocket();
     }
@@ -44,22 +46,37 @@ export class SocketManager {
                     console.error("sendTransport", roomId, transportParams);
                     return;
                 }
-                
-                const {transportId, dtlsParameters, callback} = await this.mediaSoupManager.setupDTLSConnection(transportParams) as setupDTLSConnectionResponse;
+                console.log("Send Transport :", {roomId, transportParams});
+    
+                this.mediaSoupManager.setupDTLSConnection(transportParams, this.socket as Socket, roomId);
 
-                this.socket?.emit("connectSendTransport", {roomId, transportId, dtlsParameters});
-                console.log("connectSendTransport", roomId, transportId, dtlsParameters);
-                this.socket?.once("sendTransportConnected", () => {
-                    console.log("sendTransportConnected");
-                    callback();
-                });
+                const interval = setInterval(async () => {
+                    console.log(this.mediaStream);
+                    // if (!this.mediaStream) {
+                    //     console.warn("Waiting for media stream...");
+                    //     return;
+                    // }
                 
+                    // try {
+                    //     const mediaProducer = await this.mediaSoupManager.produceMedia(this.mediaStream);
+                    //     console.log("Media producer initialized:", mediaProducer);
+                
+                    //     clearInterval(interval); // Stop polling once successful
+                    // } catch (err) {
+                    //     console.error("Failed to produce media:", err);
+                    // }
+                }, 1000);
+                
+                  
+                console.log("The control Reaches here");
+
+                
+                // console.log("Media Stream is available")
+                // this.socket?.emit("produce", {roomId, mediaProducer}, (id: string) => {
+                //     console.log("produce", roomId, mediaProducer);
+                // });
             });
-            
-            this.socket.on("error", (error: string) => {
-                // TODO: This Should be handled by the UI
-                console.error("Error from socket", error);
-            });
+
         }catch(error) {
             console.error("Error connecting to socket", error);
         }
@@ -80,6 +97,15 @@ export class SocketManager {
     public getSocket() {
         return this.socket;
     }
-    
+
+
+    public setMediaStream(mediaStream: MediaStream) {
+        console.log("setMediaStrem is called")
+        this.mediaStream = mediaStream;
+    }
+
+    public getMediaStream() {
+        return this.mediaStream;
+    }
     
 }

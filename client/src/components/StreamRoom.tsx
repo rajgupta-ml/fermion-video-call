@@ -16,11 +16,13 @@ import {
 } from 'lucide-react';
 import { useMediaToggle } from '@/hooks/StreamRoomHooks/useMediaToggle';
 import { useMediaStream } from '@/hooks/StreamRoomHooks/useMediaStream';
+import { useSocket } from '@/context/SocketProvider';
 
 const StreamRoom: React.FC = () => {
   const { roomId } = useParams();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { setupMediaStream, cleanup } = useMediaStream(videoRef as React.RefObject<HTMLVideoElement>);
+  const socketManager = useSocket();
+  const { setupMediaStream, cleanup, setMediaStream } = useMediaStream(videoRef as React.RefObject<HTMLVideoElement>, socketManager);
   const {
     isCameraOn,
     isMicrophoneOn,
@@ -29,9 +31,22 @@ const StreamRoom: React.FC = () => {
   } = useMediaToggle(videoRef as React.RefObject<HTMLVideoElement>);
 
   useEffect(() => {
-    setupMediaStream();
+    const intiMedia = async () => {
+      await setupMediaStream();
+      if(!videoRef.current?.srcObject){
+        console.error("Video Ref setup is not done properly")
+      }
+      // if(socketManager){
+      //   setMediaStream(videoRef.current?.srcObject as MediaStream);
+      // }
+    }
+
+    intiMedia();
     return () => cleanup();
-  }, []);
+  }, [socketManager, setupMediaStream]);
+
+
+
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gray-900">

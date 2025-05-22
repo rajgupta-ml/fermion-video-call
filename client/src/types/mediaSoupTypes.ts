@@ -1,4 +1,4 @@
-import { IceCandidate } from "mediasoup-client/types";
+import { IceCandidate, Transport } from "mediasoup-client/types";
 
 import { IceParameters } from "mediasoup-client/types";
 
@@ -13,7 +13,6 @@ export interface TransportParams {
 
 
 export interface setupDTLSConnectionResponse {
-    
     transportId: string;
     dtlsParameters: DtlsParameters;
     callback: () => void;

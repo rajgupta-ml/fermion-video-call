@@ -1,4 +1,6 @@
-export const useMediaStream = (videoRef: React.RefObject<HTMLVideoElement>) => {
+import { SocketManager } from "@/mangers/SocketManager";
+
+export const useMediaStream = (videoRef: React.RefObject<HTMLVideoElement>, socketManager: SocketManager) => {
 
   const setupMediaStream = async () => {
     try {
@@ -10,9 +12,15 @@ export const useMediaStream = (videoRef: React.RefObject<HTMLVideoElement>) => {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
+
+      socketManager.setMediaStream(stream);
     } catch (error) {
       console.error('Error accessing media devices:', error);
     }
+  };
+
+  const setMediaStream = (mediaStream: MediaStream) => {
+    socketManager.setMediaStream(mediaStream);
   };
 
   const cleanup = () => {
@@ -22,5 +30,5 @@ export const useMediaStream = (videoRef: React.RefObject<HTMLVideoElement>) => {
     }
   };
 
-  return { setupMediaStream, cleanup };
+  return { setupMediaStream, cleanup, setMediaStream };
 };
